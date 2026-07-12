@@ -1,32 +1,42 @@
-# React + TypeScript + Vite
+# Movie Picker
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Docker Compose app with Postgres. On first launch you create a user; settings are stored in the database (not browser cache).
 
-Currently, two official plugins are available:
+## Portainer
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Add a new **Stack** from this repo (Git) or paste `docker-compose.yml`.
+2. Set these environment variables:
 
-## React Compiler
+| Variable | Required | Notes |
+|----------|----------|--------|
+| `POSTGRES_PASSWORD` | yes | Database password |
+| `JWT_SECRET` | yes | Long random string for login tokens |
+| `POSTGRES_USER` | no | Default `movie` |
+| `POSTGRES_DB` | no | Default `movie_picker` |
+| `APP_PORT` | no | Host port, default `8080` |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+3. Deploy the stack.
+4. Open `http://YOUR_SERVER:8080` → create the first user → sign in.
 
-## Expanding the Oxlint configuration
+Settings persist in the `pgdata` volume across restarts.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Local Docker
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+cp .env.example .env
+# edit POSTGRES_PASSWORD and JWT_SECRET
+docker compose up --build -d
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Then open http://localhost:8080
+
+## Local frontend development
+
+Run Postgres + API (Docker or local Node), then:
+
+```bash
+npm install
+npm run dev
+```
+
+Vite proxies `/api` to `http://localhost:3000`. Point the API at Postgres with `DATABASE_URL`, `JWT_SECRET`, and `PORT=3000` (see `server/`).
