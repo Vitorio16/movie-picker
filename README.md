@@ -39,4 +39,4 @@ npm install
 npm run dev
 ```
 
-Vite proxies `/api` to `http://localhost:3000`. Point the API at Postgres with `DATABASE_URL`, `JWT_SECRET`, and `PORT=3000` (see `server/`).
+Vite proxies `/api` to `http://localhost:3000`. For the API, set `PGHOST`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `JWT_SECRET`, and `PORT=3000` (see `server/`).

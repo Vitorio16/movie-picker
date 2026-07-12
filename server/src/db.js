@@ -2,9 +2,27 @@ import pg from "pg";
 
 const { Pool } = pg;
 
-export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+function createPool() {
+  if (process.env.PGHOST || process.env.POSTGRES_HOST) {
+    return new Pool({
+      host: process.env.PGHOST || process.env.POSTGRES_HOST || "db",
+      port: Number(process.env.PGPORT || process.env.POSTGRES_PORT || 5432),
+      user: process.env.PGUSER || process.env.POSTGRES_USER,
+      password: process.env.PGPASSWORD || process.env.POSTGRES_PASSWORD,
+      database: process.env.PGDATABASE || process.env.POSTGRES_DB,
+    });
+  }
+
+  if (process.env.DATABASE_URL) {
+    return new Pool({ connectionString: process.env.DATABASE_URL });
+  }
+
+  throw new Error(
+    "Database config required: set PGHOST/PGUSER/PGPASSWORD/PGDATABASE (or DATABASE_URL)",
+  );
+}
+
+export const pool = createPool();
 
 const DEFAULT_GENRES = ["Horror", "Comedy"];
 const DEFAULT_EXTRAS = ["haunted house", "road trip", "mistaken identity"];

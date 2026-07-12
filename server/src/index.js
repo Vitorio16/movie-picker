@@ -10,8 +10,16 @@ const publicDir = path.join(__dirname, "..", "public");
 const port = Number(process.env.PORT || 8080);
 
 async function start() {
-  if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL is required");
+  const hasDiscreteDb =
+    (process.env.PGHOST || process.env.POSTGRES_HOST) &&
+    (process.env.PGUSER || process.env.POSTGRES_USER) &&
+    (process.env.PGPASSWORD || process.env.POSTGRES_PASSWORD) &&
+    (process.env.PGDATABASE || process.env.POSTGRES_DB);
+
+  if (!hasDiscreteDb && !process.env.DATABASE_URL) {
+    throw new Error(
+      "Database config required: set PGHOST/PGUSER/PGPASSWORD/PGDATABASE (or DATABASE_URL)",
+    );
   }
   if (!process.env.JWT_SECRET) {
     throw new Error("JWT_SECRET is required");
