@@ -4,7 +4,6 @@ import type { Settings } from "../hooks/useSettings";
 type SettingsViewProps = {
   settings: Settings;
   onChange: (settings: Settings) => void;
-  onReset: () => void;
 };
 
 function EditableList({
@@ -74,7 +73,7 @@ function EditableList({
   );
 }
 
-export function SettingsView({ settings, onChange, onReset }: SettingsViewProps) {
+export function SettingsView({ settings, onChange }: SettingsViewProps) {
   const yearError =
     settings.yearMin > settings.yearMax
       ? "Min year must be less than or equal to max year."

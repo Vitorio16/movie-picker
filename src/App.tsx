@@ -10,7 +10,7 @@ type View = "generate" | "settings";
 
 export default function App() {
   const auth = useAuth();
-  const { settings, setSettings, resetSettings, loading: settingsLoading } = useSettings(
+  const { settings, setSettings, loading: settingsLoading } = useSettings(
     auth.token,
   );
   const [view, setView] = useState<View>("generate");
@@ -74,7 +74,6 @@ export default function App() {
         <SettingsView
           settings={settings}
           onChange={setSettings}
-          onReset={resetSettings}
         />
       )}
     </div>
