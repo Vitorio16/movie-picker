@@ -138,16 +138,6 @@ export function SettingsView({ settings, onChange, onReset }: SettingsViewProps)
           placeholder="Add an extra…"
         />
       </section>
-
-      <button
-        type="button"
-        className="reset-btn"
-        onClick={() => {
-          if (window.confirm("Reset all settings to defaults?")) onReset();
-        }}
-      >
-        Reset to defaults
-      </button>
     </div>
   );
 }
