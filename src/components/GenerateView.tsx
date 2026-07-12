@@ -1,26 +1,46 @@
-import { pickRandom, randomInt } from "../lib/random";
+import { useState } from "react";
+import type { Combination } from "../lib/combinations";
+import { generateUnique } from "../lib/combinations";
 import type { Settings } from "../hooks/useSettings";
 
-export type PromptResult = {
-  year: number;
-  genre: string;
-  extra: string;
-};
+export type PromptResult = Combination;
 
 type GenerateViewProps = {
   settings: Settings;
   result: PromptResult | null;
+  excludedKeys: Set<string>;
   onGenerate: (result: PromptResult) => void;
+  onNoMovieFound: (result: PromptResult) => Promise<void>;
 };
 
-export function GenerateView({ settings, result, onGenerate }: GenerateViewProps) {
+export function GenerateView({
+  settings,
+  result,
+  excludedKeys,
+  onGenerate,
+  onNoMovieFound,
+}: GenerateViewProps) {
+  const [exhausted, setExhausted] = useState(false);
+  const [saving, setSaving] = useState(false);
+
   function handleGenerate() {
-    const min = Math.min(settings.yearMin, settings.yearMax);
-    const max = Math.max(settings.yearMin, settings.yearMax);
-    const year = randomInt(min, max);
-    const genre = pickRandom(settings.genres) ?? "—";
-    const extra = pickRandom(settings.extras) ?? "—";
-    onGenerate({ year, genre, extra });
+    setExhausted(false);
+    const next = generateUnique(settings, excludedKeys);
+    if (next === "exhausted") {
+      setExhausted(true);
+      return;
+    }
+    onGenerate(next);
+  }
+
+  async function handleNoMovieFound() {
+    if (!result || saving) return;
+    setSaving(true);
+    try {
+      await onNoMovieFound(result);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -46,9 +66,27 @@ export function GenerateView({ settings, result, onGenerate }: GenerateViewProps
         </div>
       </div>
 
-      <button type="button" className="generate-btn" onClick={handleGenerate}>
-        Generate
-      </button>
+      <div className="generate-actions">
+        <button type="button" className="generate-btn" onClick={handleGenerate}>
+          Generate
+        </button>
+        {result && (
+          <button
+            type="button"
+            className="secondary-btn"
+            onClick={() => void handleNoMovieFound()}
+            disabled={saving}
+          >
+            {saving ? "Saving…" : "No Movie Found"}
+          </button>
+        )}
+      </div>
+
+      {exhausted && (
+        <p className="field-error generate-message">
+          All combinations are excluded. Remove some in Settings to generate again.
+        </p>
+      )}
     </div>
   );
 }

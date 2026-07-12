@@ -43,6 +43,16 @@ export async function migrate() {
       genres JSONB NOT NULL DEFAULT '["Horror","Comedy"]'::jsonb,
       extras JSONB NOT NULL DEFAULT '["haunted house","road trip","mistaken identity"]'::jsonb
     );
+
+    CREATE TABLE IF NOT EXISTS excluded_combinations (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      year INTEGER NOT NULL,
+      genre TEXT NOT NULL,
+      extra TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (user_id, year, genre, extra)
+    );
   `);
 }
 
@@ -126,4 +136,50 @@ export async function upsertSettings(userId, settings) {
       JSON.stringify(settings.extras),
     ],
   );
+}
+
+export async function listExcludedCombinations(userId) {
+  const result = await pool.query(
+    `SELECT id, year, genre, extra, created_at
+     FROM excluded_combinations
+     WHERE user_id = $1
+     ORDER BY created_at DESC`,
+    [userId],
+  );
+  return result.rows.map((row) => ({
+    id: row.id,
+    year: row.year,
+    genre: row.genre,
+    extra: row.extra,
+    createdAt: row.created_at,
+  }));
+}
+
+export async function addExcludedCombination(userId, { year, genre, extra }) {
+  const result = await pool.query(
+    `INSERT INTO excluded_combinations (user_id, year, genre, extra)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (user_id, year, genre, extra) DO UPDATE
+       SET created_at = excluded_combinations.created_at
+     RETURNING id, year, genre, extra, created_at`,
+    [userId, year, genre, extra],
+  );
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    year: row.year,
+    genre: row.genre,
+    extra: row.extra,
+    createdAt: row.created_at,
+  };
+}
+
+export async function deleteExcludedCombination(userId, id) {
+  const result = await pool.query(
+    `DELETE FROM excluded_combinations
+     WHERE id = $1 AND user_id = $2
+     RETURNING id`,
+    [id, userId],
+  );
+  return result.rowCount > 0;
 }

@@ -4,15 +4,15 @@ import { LoginView } from "./components/LoginView";
 import { SettingsView } from "./components/SettingsView";
 import { SetupView } from "./components/SetupView";
 import { useAuth } from "./hooks/useAuth";
+import { useExcluded } from "./hooks/useExcluded";
 import { useSettings } from "./hooks/useSettings";
 
 type View = "generate" | "settings";
 
 export default function App() {
   const auth = useAuth();
-  const { settings, setSettings, loading: settingsLoading } = useSettings(
-    auth.token,
-  );
+  const { settings, setSettings, loading: settingsLoading } = useSettings(auth.token);
+  const excluded = useExcluded(auth.token);
   const [view, setView] = useState<View>("generate");
   const [result, setResult] = useState<PromptResult | null>(null);
 
@@ -69,11 +69,22 @@ export default function App() {
       {settingsLoading ? (
         <p className="auth-copy">Loading settings…</p>
       ) : view === "generate" ? (
-        <GenerateView settings={settings} result={result} onGenerate={setResult} />
+        <GenerateView
+          settings={settings}
+          result={result}
+          excludedKeys={excluded.excludedKeys}
+          onGenerate={setResult}
+          onNoMovieFound={async (combo) => {
+            await excluded.addExcluded(combo);
+          }}
+        />
       ) : (
         <SettingsView
           settings={settings}
           onChange={setSettings}
+          excluded={excluded.items}
+          excludedLoading={excluded.loading}
+          onRemoveExcluded={excluded.removeExcluded}
         />
       )}
     </div>

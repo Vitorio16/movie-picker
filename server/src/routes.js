@@ -6,10 +6,13 @@ import {
   verifyPassword,
 } from "./auth.js";
 import {
+  addExcludedCombination,
   createUserWithSettings,
+  deleteExcludedCombination,
   findUserById,
   findUserByUsername,
   getSettings,
+  listExcludedCombinations,
   upsertSettings,
   userCount,
 } from "./db.js";
@@ -143,6 +146,52 @@ router.put("/settings", authMiddleware, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to save settings" });
+  }
+});
+
+router.get("/excluded", authMiddleware, async (req, res) => {
+  try {
+    const items = await listExcludedCombinations(req.user.id);
+    res.json(items);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to load excluded combinations" });
+  }
+});
+
+router.post("/excluded", authMiddleware, async (req, res) => {
+  try {
+    const year = Number(req.body.year);
+    const genre = String(req.body.genre ?? "").trim();
+    const extra = String(req.body.extra ?? "").trim();
+
+    if (!Number.isFinite(year) || !genre || !extra) {
+      return res.status(400).json({ error: "year, genre, and extra are required" });
+    }
+
+    const item = await addExcludedCombination(req.user.id, { year, genre, extra });
+    res.status(201).json(item);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to save excluded combination" });
+  }
+});
+
+router.delete("/excluded/:id", authMiddleware, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "Invalid id" });
+    }
+
+    const deleted = await deleteExcludedCombination(req.user.id, id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Not found" });
+    }
+    res.status(204).end();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to delete excluded combination" });
   }
 });
 
